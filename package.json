@@ -1,0 +1,20 @@
+{
+    "name": "fivemserverstatusbot",
+    "version": "1.0.0",
+    "description": "Egyszeű de nagyszerű fivem státusz bot",
+    "main": "index.js",
+    "type": "commonjs",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "MedveMarci",
+    "license": "ISC",
+    "dependencies": {
+        "@types/node": "^18.15.3",
+        "axios": "^1.3.5",
+        "chalk": "^4.1.2",
+        "discord.js": "^14.9.0",
+        "dotenv": "^16.0.3"
+    }
+}
