@@ -1,13 +1,12 @@
 import { Client, Events, GatewayIntentBits, TextChannel } from "discord.js";
 import chalk from "chalk";
-import { StatusSystem } from "./functions/statusSystem";
+import { StatusSystemStart } from "./functions/statusSystem";
 
 require("dotenv").config();
 const client = new Client({ intents: [ GatewayIntentBits.Guilds, GatewayIntentBits.GuildPresences ] });
-const guild = client.guilds.cache.first();
-export { client, guild }
+export { client }
 
-client.once(Events.ClientReady, async (c: { user: { tag: any; }; }) => {
+client.once(Events.ClientReady, async () => {
     if (client.guilds.cache.size > 1) {
         console.log(chalk.blue(
             "A bot jelenleg több discord szerveren is jelen van. Erre nincs felkészítve, így csak az egyiken fog megfelelően működni.\nMegfelelő működés helye: " +
@@ -18,7 +17,7 @@ client.once(Events.ClientReady, async (c: { user: { tag: any; }; }) => {
         });
     } else {
         try {
-            await StatusSystem();
+            await StatusSystemStart();
             console.log(chalk.green(`${client.user?.username} sikeresen elindult!`));
         } catch (e) {
             console.log(e);
@@ -27,16 +26,15 @@ client.once(Events.ClientReady, async (c: { user: { tag: any; }; }) => {
     }
 });
 
-export function GetMember(id: string) {
-    const guild = client.guilds.cache.first();
-    const member = guild!.members.cache.get(`${id}`);
-    return member;
-}
-
 export function GetChannel(id: string) {
     const guild = client.guilds.cache.first();
     const channel = guild?.channels.cache.get(`${id}`);
     return channel as TextChannel;
 }
 
-client.login(process.env.TOKEN);
+client.login(process.env.TOKEN).then(() => {
+    console.log(chalk.green("Sikeresen bejelentkeztem!"));
+}).catch(e => {
+    console.log(chalk.red("Hiba történt a bejelentkezés során!"));
+    console.log(e);
+});

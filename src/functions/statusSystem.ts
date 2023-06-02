@@ -1,100 +1,108 @@
 import { client, GetChannel } from "../index";
-import { ActivityType, EmbedBuilder, Message, TextChannel } from "discord.js";
-import axios from "axios";
-import chalk from "chalk";
+import { ActivityType, EmbedBuilder } from "discord.js";
+import { request } from "undici";
+
 require("dotenv").config();
+const fs = require("fs");
 
-
-let firstRun = true;
-let message: Message<boolean>;
 let players: string[] = [];
-let joinedPlayers
+let joinedPlayers;
+let serverstatus: string;
+let ip: string;
 
-export async function StatusSystem() {
-    const channel = GetChannel(`${process.env.StatusChannel}`);
-    const messages = await channel.messages.fetch();
-    if (messages.size !== 0) {
-        await channel.messages.fetch().then(message => {
-            channel.bulkDelete(message);
-        })
-        await sendServerStatus(channel);
-    } else {
-        await sendServerStatus(channel);
+
+export async function StatusSystemStart() {
+    const channel = CheckChannel();
+    const embed = new EmbedBuilder()
+    .setTitle(`${process.env.SERVER_NAME} 0/0 játékos`)
+    .setDescription("Éppen indul a bot")
+    .addFields(
+        { name: `Állapot :construction_worker:`, value: "Éppen indul a bot", inline: true }
+    )
+    .setColor("Grey")
+    .setThumbnail(client.guilds.cache.first()!.iconURL()!)
+    .setTimestamp();
+    const lmessage = JSON.parse(fs.readFileSync("./message.json", "utf-8"));
+    channel?.messages.fetch({ limit: 1 }).then(async messages => {
+        let lastMessage = messages.first();
+        if (lmessage.messageID === lastMessage?.id) {
+            const statusmessage = await channel?.messages.fetch(lmessage.messageID);
+            await statusmessage?.edit({ embeds: [ embed ] });
+            fs.writeFileSync("./message.json", JSON.stringify({ messageID: channel?.messages.cache.last()?.id }));
+            await StatusSystem();
+        } else {
+            const message = await channel?.send({ embeds: [ embed ] });
+            fs.writeFileSync("./message.json", JSON.stringify({ messageID: message?.id }));
+            await StatusSystem();
+        }
+    });
+}
+
+
+async function StatusSystem() {
+    const lmessage = JSON.parse(fs.readFileSync("./message.json", "utf-8"));
+    const channel = CheckChannel();
+    const url = `http://${process.env.SERVER_IP}:${process.env.SERVER_PORT}`;
+    try {
+        players = [];
+        const json = await (await request(`${url}/info.json`, { method: "GET" })).body.json();
+        const player = await (await request(`${url}/players.json`, { method: "GET" })).body.json();
+        if (player.length === 0) {
+            players = [ "Jelenleg nincs játékos a szerveren" ];
+        } else {
+            player.forEach((name: any) => {
+                players.push("`" + `${name.name}` + "`");
+            });
+        }
+        joinedPlayers = players.join(":diamond_shape_with_a_dot_inside:");
+        if (process.env.WHITELIST === "true") {
+            serverstatus = "Whitelist bekapcsolva :lock:";
+            ip = "Nem elérhető";
+        } else {
+            serverstatus = "ELÉRHETŐ :white_check_mark:";
+            ip = `${process.env.serverIP} :electric_plug:`;
+        }
+        const embed = new EmbedBuilder()
+        .setTitle(`${process.env.SERVER_NAME} ${player.length}/${json.vars.sv_maxClients} játékos`)
+        .setDescription(`${joinedPlayers}`)
+        .addFields(
+            { name: `Állapot :white_check_mark:`, value: `${serverstatus}`, inline: true },
+            { name: `IP :telescope:`, value: `${ip}`, inline: true }
+        )
+        .setColor("Green")
+        .setThumbnail(client.guilds.cache.first()!.iconURL()!)
+        .setTimestamp();
+        const lastmessage = await channel?.messages.fetch(lmessage.messageID);
+        await lastmessage?.edit({ embeds: [ embed ] });
+    } catch (e) {
+        if (process.env.WHITELIST === "true") {
+            serverstatus = "Whitelist bekapcsolva :lock:";
+            ip = "Nem elérhető";
+        } else {
+            serverstatus = "NEM ELÉRHETŐ :x:";
+            ip = `${process.env.serverIP} :electric_plug:`;
+        }
+        const embed = new EmbedBuilder()
+        .setTitle(`${process.env.SERVER_NAME} 0/0 játékos`)
+        .addFields(
+            { name: `Állapot :x:`, value: `${serverstatus}`, inline: true },
+            { name: `IP :telescope:`, value: `${ip}`, inline: true }
+        )
+        .setColor("Red")
+        .setThumbnail(client.guilds.cache.first()!.iconURL()!)
+        .setTimestamp();
+        const lastmessage = await channel?.messages.fetch(lmessage.messageID);
+        await lastmessage?.edit({ embeds: [ embed ] });
+    } finally {
+        setTimeout(StatusSystem, 5000);
     }
 }
 
-async function sendServerStatus(channel: TextChannel) {
-    try {
-        players = []
-        const info = await axios.get(`http://${process.env.serverIP}:${process.env.serverPort}/info.json`);
-        const player = await axios.get(`http://${process.env.serverIP}:${process.env.serverPort}/players.json`);
-        if (player.data.length === 0) {
-            players = ["Jelenleg nincs játékos a szerveren"]
-        } else {
-            player.data.forEach((name: any) => {
-                players.push(name.name)
-            });
-        }
-        joinedPlayers = players.join(", ")
-        const status = new EmbedBuilder()
-        .setTitle(`${process.env.ServerName}`)
-        .setTimestamp()
-        .setFooter({ text: "Frissítve:" })
-        .setDescription(`**Játékosok**: \n${joinedPlayers}`)
-        .addFields(
-            {
-                name: "Játékosok száma", value: `${player.data.length}/${info.data.vars.sv_maxClients}`, inline: true
-            },
-            {
-                name: "Szerver állapot", value: `ELÉRHETŐ :green_circle:`, inline: true
-            },
-            {
-                name: "IP:", value: `${process.env.serverIP}`, inline: true
-            }
-        )
-        if (firstRun) {
-            message = await channel.send({ embeds: [ status ] });
-            console.log(chalk.green("A bot sikeresen elindult!"));
-            client.user?.setStatus("online");
-            client.user?.setActivity(`${player.data.length} játékos elérhető a ${process.env.ServerName} szerveren!`, { type: ActivityType.Watching });
-            console.log(chalk.blue("A státusz sikeresen frissült!"));
-            firstRun = false;
-        } else {
-            await message.edit({ embeds: [ status ] });
-            client.user?.setStatus("online");
-            client.user?.setActivity(`${player.data.length} játékos elérhető a ${process.env.ServerName} szerveren!`, { type: ActivityType.Watching });
-            console.log(chalk.blue("A státusz sikeresen frissült!"));
-        }
-    } catch (e) {
-        const status = new EmbedBuilder()
-        .setTitle(`${process.env.ServerName}`)
-        .setTimestamp()
-        .setFooter({ text: "Frissítve:" })
-        .setDescription(`**Játékosok**: \nIsmeretlen`)
-        .addFields(
-            {
-                name: "Játékosok száma", value: `Ismeretlen`, inline: false
-            },
-            {
-                name: "Szerver állapota", value: `OFFLINE :x:`, inline: true
-            },
-            {
-                name: "IP:", value: `${process.env.serverIP}`, inline: true
-            }
-        )
-        if (firstRun) {
-            message = await channel.send({ embeds: [ status ] });
-            console.log(chalk.red("A státusz sikeresen frissült! OFFLINE"));
-            client.user?.setStatus("dnd");
-            client.user?.setActivity(`A szerver OFFLINE`, { type: ActivityType.Watching });
-            firstRun = false;
-        } else {
-            await message.edit({ embeds: [ status ] });
-            console.log(chalk.red("A státusz sikeresen frissült! OFFLINE"));
-            client.user?.setStatus("dnd")
-            client.user?.setActivity(`A szerver OFFLINE`, { type: ActivityType.Watching });
-        }
-    } finally {
-        setTimeout(sendServerStatus, 10000);
+function CheckChannel() {
+    const channel = GetChannel(process.env.STATUS_CHANNEL_ID!);
+    if (channel == null) {
+        console.log("A csatorna nem található!");
+        return;
     }
+    return channel;
 }
