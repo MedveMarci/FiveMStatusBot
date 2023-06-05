@@ -1,0 +1,29 @@
+{
+    "Buttons": {
+        "Button": {
+            "enabled": false,
+            "Label": "",
+            "URL": ""
+        },
+        "Button1": {
+            "enabled": false,
+            "Label": "",
+            "URL": ""
+        },
+        "Button2": {
+            "enabled": false,
+            "Label": "",
+            "URL": ""
+        },
+        "Button3": {
+            "enabled": false,
+            "Label": "",
+            "URL": ""
+        },
+        "Button4": {
+            "enabled": false,
+            "Label": "",
+            "URL": ""
+        }
+    }
+}
