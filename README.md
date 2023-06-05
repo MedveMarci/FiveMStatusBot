@@ -1,6 +1,6 @@
 # FiveMStatusBot
 
-- .env és a config.json fileokban tudod konfigurálni a botot
+- .env és a dist/config.json fileokban tudod konfigurálni a botot
 - https://discord.com/developers/applications linken tudsz discord botot csinálni
 - A STATUS_CHANNEL_ID-hez annak a csatorna ID-jét írd amelyik csatornába szeretnéd hogy a státusz üzenetet küldje a bot.
 - A bot indítása előtt telepítsd fel a node-ot amit a https://nodejs.org/en/download/current linken érsz el és indítsd el a install.bat-ot, ha ez végzett a start.bat-ot indítsd el
