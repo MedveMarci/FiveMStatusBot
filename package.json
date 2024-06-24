@@ -1,0 +1,15 @@
+{
+    "name": "fivemstatusbot",
+    "version": "1.0.0",
+    "description": "Egyszeű de nagyszerű fivem státusz bot",
+    "main": "index.js",
+    "type": "commonjs",
+    "author": "MedveMarci",
+    "license": "ISC",
+    "dependencies": {
+        "@types/node": "^18.15.3",
+        "chalk": "^4.1.2",
+        "discord.js": "^14.15.3",
+        "quickchart-js": "^3.1.2"
+    }
+}
