@@ -7,5 +7,6 @@
 - Az átlag játékosszámot a grafiknból számolja.
 - A legtöbb játékosszám minden nap 00:00-kor lenullázódik.
 - Ahhoz hogy a parancsok működjenek le kell futtatnod a registerCommands.bat/.sh-t
-- Minden parancsot a Rendszergazda jogosultsággal rendelketzők tudják használni.
+- Minden parancsot a Rendszergazda jogosultsággal rendelketzők tudják használni. 
 - Ha bármilyen ötleted van a bottal kapcsolatban vagy hibát találsz írj rám nyugodtan discordon (medvemarci)
+- Az alapértelmezett szerzői jogi törvények érvényesek vagyis senki sem reprodukálhatja vagy használhatja fel a kódot.
